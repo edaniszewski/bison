@@ -1,0 +1,17 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
+# install dependencies
+install: "make"
+
+# run tests and linting
+script:
+  - pip install pipenv --upgrade
+  - make init
+  - make ci
+
+after_success:
+  - coveralls

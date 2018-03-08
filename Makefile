@@ -20,7 +20,7 @@ test:  ## Run the bison unit tests
 	pipenv run py.test
 
 .PHONY: ci
-ci: test lint ## Run the ci pipeline (test, lint)
+ci: coverage lint ## Run the ci pipeline (test w/ coverage, lint)
 
 .PHONY: lint
 lint: requires-pipenv  ## Run static analysis / linting on bison
