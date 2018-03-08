@@ -1,0 +1,12 @@
+log: debug
+port: 5000
+settings:
+  requests:
+    timeout: 3
+backends:
+  - host: 10.1.2.3
+    port: 5001
+  - host: 10.1.2.4
+    port: 5013
+  - host: 10.1.2.5
+    port: 5044
