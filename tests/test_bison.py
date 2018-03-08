@@ -84,6 +84,33 @@ class TestBison:
         assert len(b._override) == 1
         assert b.get(key) == value
 
+    def test_set_multiple_nested(self):
+        """Set overrides for multiple nested values"""
+        b = bison.Bison()
+        assert len(b._override) == 0
+        assert len(b.config) == 0
+
+        b.set('foo.bar.a', 'test')
+
+        assert b.config == {
+            'foo': {
+                'bar': {
+                    'a': 'test'
+                }
+            }
+        }
+
+        b.set('foo.bar.b', 'test')
+
+        assert b.config == {
+            'foo': {
+                'bar': {
+                    'a': 'test',
+                    'b': 'test'
+                }
+            }
+        }
+
     @pytest.mark.parametrize(
         'paths', [
             (),

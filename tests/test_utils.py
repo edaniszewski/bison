@@ -202,6 +202,168 @@ class TestDotDict:
         dd[key] = value
         assert dd.get(key) == value
 
+    def test_set_multiple_nested(self):
+        """Set multiple nested items"""
+        dd = utils.DotDict()
+        assert dd == {}
+
+        dd['foo.bar.a'] = 'test'
+        assert dd == {
+            'foo': {
+                'bar': {
+                    'a': 'test'
+                }
+            }
+        }
+
+        dd['foo.bar.b'] = 'test'
+        assert dd == {
+            'foo': {
+                'bar': {
+                    'a': 'test',
+                    'b': 'test'
+                }
+            }
+        }
+
+    def test_set_multiple_neste2(self):
+        """Set multiple nested items"""
+        dd = utils.DotDict()
+        assert dd == {}
+
+        dd['foo'] = 'test'
+        assert dd == {
+            'foo': 'test'
+        }
+
+        dd['bar.baz'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test'
+            }
+        }
+
+        dd['bar.ball'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test',
+                'ball': 'test'
+            }
+        }
+
+        dd['bar.bits.a'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test',
+                'ball': 'test',
+                'bits': {
+                    'a': 'test'
+                }
+            }
+        }
+
+        dd['bar.bits.b'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test',
+                'ball': 'test',
+                'bits': {
+                    'a': 'test',
+                    'b': 'test'
+                }
+            }
+        }
+
+        dd['bar.new.a'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test',
+                'ball': 'test',
+                'bits': {
+                    'a': 'test',
+                    'b': 'test'
+                },
+                'new': {
+                    'a': 'test'
+                }
+            }
+        }
+
+        dd['bar.new.b.c.d'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test',
+                'ball': 'test',
+                'bits': {
+                    'a': 'test',
+                    'b': 'test'
+                },
+                'new': {
+                    'a': 'test',
+                    'b': {
+                        'c': {
+                            'd': 'test'
+                        }
+                    }
+                }
+            }
+        }
+
+        dd['bar.new.b'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': {
+                'baz': 'test',
+                'ball': 'test',
+                'bits': {
+                    'a': 'test',
+                    'b': 'test'
+                },
+                'new': {
+                    'a': 'test',
+                    'b': 'test'
+                }
+            }
+        }
+
+        dd['bar'] = 'test'
+        assert dd == {
+            'foo': 'test',
+            'bar': 'test'
+        }
+
+        dd['foo.bar.a'] = 'test'
+        assert dd == {
+            'foo': {
+                'bar': {
+                    'a': 'test'
+                }
+            },
+            'bar': 'test'
+        }
+
+        dd['foo'] = ['a', 'b', 'c']
+        assert dd == {
+            'foo': ['a', 'b', 'c'],
+            'bar': 'test'
+        }
+
+        dd['foo.bar.b'] = ['a', 'b', 'c']
+        assert dd == {
+            'foo': {
+                'bar': {
+                    'b': ['a', 'b', 'c']
+                }
+            },
+            'bar': 'test'
+        }
+
     @pytest.mark.parametrize(
         'key,expected', [
             ('a', True),
