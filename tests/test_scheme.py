@@ -5,11 +5,18 @@ import pytest
 from bison import errors, scheme
 
 
-def test_base_opt():
+def test_base_opt_validate():
     """Validate the base option, which should fail."""
     opt = scheme._BaseOpt()
     with pytest.raises(NotImplementedError):
         opt.validate('test-data')
+
+
+def test_base_opt_parse_env():
+    """Parse env from the base option, which should fail."""
+    opt = scheme._BaseOpt()
+    with pytest.raises(NotImplementedError):
+        opt.parse_env()
 
 
 class TestOption:
@@ -143,6 +150,85 @@ class TestOption:
         with pytest.raises(errors.SchemeValidationError):
             opt.validate(value)
 
+    @pytest.mark.parametrize(
+        'option,value,expected', [
+            (scheme.Option('foo'), 'foo', 'foo'),
+            (scheme.Option('foo'), 1, 1),
+            (scheme.Option('foo'), None, None),
+            (scheme.Option('foo'), False, False),
+            (scheme.Option('foo', field_type=str), 'foo', 'foo'),
+            (scheme.Option('foo', field_type=str), 1, '1'),
+            (scheme.Option('foo', field_type=int), '1', 1),
+            (scheme.Option('foo', field_type=float), '1', 1.0),
+            (scheme.Option('foo', field_type=float), '1.23', 1.23),
+            (scheme.Option('foo', field_type=bool), 'false', False),
+            (scheme.Option('foo', field_type=bool), 'False', False),
+            (scheme.Option('foo', field_type=bool), 'FALSE', False),
+            (scheme.Option('foo', field_type=bool), 'true', True),
+            (scheme.Option('foo', field_type=bool), 'True', True),
+            (scheme.Option('foo', field_type=bool), 'TRUE', True),
+        ]
+    )
+    def test_cast(self, option, value, expected):
+        """Cast values to the type set by the Option."""
+        actual = option.cast(value)
+        assert actual == expected
+
+    @pytest.mark.parametrize(
+        'option,value', [
+            (scheme.Option('foo', field_type=int), 'foo'),
+            (scheme.Option('foo', field_type=list), 'foo'),
+            (scheme.Option('foo', field_type=tuple), 'foo'),
+        ]
+    )
+    def test_cast_fail(self, option, value):
+        """Cast values to the type set by the Option."""
+        with pytest.raises(errors.BisonError):
+            option.cast(value)
+
+    @pytest.mark.parametrize(
+        'option,prefix,auto_env', [
+            (scheme.Option('foo'), None, False),
+            (scheme.Option('foo', bind_env=False), None, False),
+            (scheme.Option('foo', bind_env=True), None, False),
+            (scheme.Option('foo', bind_env=True), 'TEST_ENV_', False),
+
+            (scheme.Option('foo', bind_env='TEST_KEY'), None, False),
+            (scheme.Option('foo', bind_env='TEST_KEY'), 'TEST_ENV_', False),
+
+            (scheme.Option('foo', bind_env=None), 'TEST_ENV_', False),
+            (scheme.Option('foo', bind_env=None), 'TEST_ENV_', True),
+            (scheme.Option('foo', bind_env=None), None, False),
+            (scheme.Option('foo', bind_env=None), None, True),
+        ]
+    )
+    def test_parse_env_none(self, option, prefix, auto_env):
+        """Parse environment variables for the Option. All of theses tests
+        should result in None being returned because no environment variables
+        are actually set.
+        """
+        actual = option.parse_env(prefix=prefix, auto_env=auto_env)
+        assert actual is None
+
+    @pytest.mark.parametrize(
+        'option,key,prefix,auto_env,expected', [
+            (scheme.Option('foo', bind_env=True), 'foo', 'TEST_ENV_', False, 'bar'),
+            (scheme.Option('foo', bind_env=True), 'foo', 'TEST_ENV_', True, 'bar'),
+
+            (scheme.Option('foo', bind_env='TEST_ENV_FOO'), 'foo', 'TEST_ENV_', False, 'bar'),
+            (scheme.Option('foo', bind_env='TEST_ENV_FOO'), 'foo', 'TEST_ENV_', True, 'bar'),
+            (scheme.Option('foo', bind_env='TEST_ENV_FOO'), 'foo', None, False, 'bar'),
+            (scheme.Option('foo', bind_env='TEST_ENV_FOO'), 'foo', None, True, 'bar'),
+
+            (scheme.Option('foo', bind_env=None), 'foo', 'TEST_ENV_', True, 'bar'),
+            (scheme.Option('foo', bind_env=None), 'nested.env.key', 'TEST_ENV_', True, 'test'),
+        ]
+    )
+    def test_parse_env_ok(self, option, key, prefix, auto_env, expected, with_env):
+        """Parse environment variables for the Option."""
+        actual = option.parse_env(key=key, prefix=prefix, auto_env=auto_env)
+        assert actual == expected
+
 
 class TestDictOption:
     """Tests for the `DictOption` class."""
@@ -203,6 +289,42 @@ class TestDictOption:
             scheme.Option('foo', field_type=str)
         ))
         opt.validate({'foo': 'bar'})
+
+    @pytest.mark.parametrize(
+        'option,prefix,auto_env', [
+            (scheme.DictOption('foo', scheme=None, bind_env=False), None, False),
+            (scheme.DictOption('foo', scheme=None, bind_env=False), None, True),
+            (scheme.DictOption('foo', scheme=None, bind_env=False), 'TEST_ENV', False),
+            (scheme.DictOption('foo', scheme=None, bind_env=False), 'TEST_ENV', True),
+
+            (scheme.DictOption('foo', scheme=None, bind_env=True), None, False),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), None, True),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'TEST_ENV', False),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'TEST_ENV', True),
+        ]
+    )
+    def test_parse_env_none(self, option, prefix, auto_env):
+        """Parse environment variables for the DictOption. All of theses tests
+        should result in None being returned because no environment variables
+        are actually set.
+        """
+        actual = option.parse_env(prefix=prefix, auto_env=auto_env)
+        assert actual is None
+
+    @pytest.mark.parametrize(
+        'option,key,prefix,auto_env,expected', [
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'foo', 'TEST_ENV_', False, None),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'foo', 'TEST_ENV_', True, None),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'nested', 'TEST_ENV_', False, {'env': {'key': 'test'}}),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'nested', 'TEST_ENV_', True, {'env': {'key': 'test'}}),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'nested.env', 'TEST_ENV_', False, {'key': 'test'}),
+            (scheme.DictOption('foo', scheme=None, bind_env=True), 'nested.env', 'TEST_ENV_', True, {'key': 'test'}),
+        ]
+    )
+    def test_parse_env_ok(self, option, key, prefix, auto_env, expected, with_env):
+        """Parse environment variables for the DictOption."""
+        actual = option.parse_env(key=key, prefix=prefix, auto_env=auto_env)
+        assert actual == expected
 
 
 class TestListOption:
@@ -357,6 +479,40 @@ class TestListOption:
         with pytest.raises(errors.SchemeValidationError):
             opt.validate(['a', 'b', 'c'])
 
+    @pytest.mark.parametrize(
+        'option,prefix,auto_env', [
+            (scheme.ListOption('foo', bind_env=False), None, False),
+            (scheme.ListOption('foo', bind_env=False), None, True),
+            (scheme.ListOption('foo', bind_env=False), 'TEST_ENV', False),
+            (scheme.ListOption('foo', bind_env=False), 'TEST_ENV', True),
+
+            (scheme.ListOption('foo', bind_env=True), None, False),
+            (scheme.ListOption('foo', bind_env=True), None, True),
+            (scheme.ListOption('foo', bind_env=True), 'TEST_ENV', False),
+            (scheme.ListOption('foo', bind_env=True), 'TEST_ENV', True),
+        ]
+    )
+    def test_parse_env_none(self, option, prefix, auto_env):
+        """Parse environment variables for the ListOption. All of theses tests
+        should result in None being returned because no environment variables
+        are actually set.
+        """
+        actual = option.parse_env(prefix=prefix, auto_env=auto_env)
+        assert actual is None
+
+    @pytest.mark.parametrize(
+        'option,key,prefix,auto_env,expected', [
+            (scheme.ListOption('foo', bind_env=True), 'foo', 'TEST_ENV_', False, ['bar']),
+            (scheme.ListOption('foo', bind_env=True), 'foo', 'TEST_ENV_', True, ['bar']),
+            (scheme.ListOption('foo', bind_env=True), 'bar.list', 'TEST_ENV_', False, ['a', 'b', 'c']),
+            (scheme.ListOption('foo', bind_env=True), 'bar.list', 'TEST_ENV_', True, ['a', 'b', 'c']),
+        ]
+    )
+    def test_parse_env_ok(self, option, key, prefix, auto_env, expected, with_env):
+        """Parse environment variables for the ListOption."""
+        actual = option.parse_env(key=key, prefix=prefix, auto_env=auto_env)
+        assert actual == expected
+
 
 class TestScheme:
     """Tests for the `Scheme` class."""
@@ -407,6 +563,17 @@ class TestScheme:
                 {
                     'bar': 'baz',
                     'list': ['a', 'b']
+                }
+            ),
+            (
+                # args
+                (
+                    scheme.Option('foo', default='bar'),
+                    scheme.DictOption('bar', scheme=None)
+                ),
+                # expected
+                {
+                    'foo': 'bar'
                 }
             ),
             (
@@ -466,6 +633,10 @@ class TestScheme:
             ),
             (
                 (scheme.Option('foo'), scheme.Option('bar')),
+                ['foo', 'bar']
+            ),
+            (
+                (scheme.Option('foo'), scheme.DictOption('bar', scheme=None)),
                 ['foo', 'bar']
             ),
             (

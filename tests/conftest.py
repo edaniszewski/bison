@@ -39,6 +39,7 @@ def with_env():
     """Set and cleanup environment variables for tests."""
     os.environ['TEST_ENV_FOO'] = 'bar'
     os.environ['TEST_ENV_NESTED_ENV_KEY'] = 'test'
+    os.environ['TEST_ENV_BAR_LIST'] = 'a,b,c'
     os.environ['TEST_OTHER_ENV_BAR'] = 'baz'
     os.environ['FOO_INT'] = '1'
     os.environ['FOO_BOOL'] = 'False'
@@ -47,6 +48,7 @@ def with_env():
 
     del os.environ['TEST_ENV_FOO']
     del os.environ['TEST_ENV_NESTED_ENV_KEY']
+    del os.environ['TEST_ENV_BAR_LIST']
     del os.environ['TEST_OTHER_ENV_BAR']
     del os.environ['FOO_INT']
     del os.environ['FOO_BOOL']
