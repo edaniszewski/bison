@@ -62,8 +62,14 @@ class DotDict(dict):
         # otherwise, traverse the key components to set the value
         first, remainder = key.split('.', 1)
         if first in self:
-            v = super(DotDict, self).__getitem__(first)
-            v.__setitem__(remainder, value)
+            elem = super(DotDict, self).__getitem__(first)
+            if isinstance(elem, dict):
+                dd = DotDict(elem)
+                dd.__setitem__(remainder, value)
+                elem.update(dd)
+            else:
+                k, v = build_dot_value(key, value)
+                super(DotDict, self).__setitem__(k, v)
 
         else:
             k, v = build_dot_value(key, value)
