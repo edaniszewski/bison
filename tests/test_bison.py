@@ -186,6 +186,13 @@ class TestBison:
 
         assert b.config_file == os.path.join(yaml_config.dirname, yaml_config.basename)
         assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'bar': {
+                'baz': 1,
+                'test': 'value'
+            }
+        }
 
     def test_parse_config_fail(self, bad_yaml_config):
         """Parse the file config unsuccessfully."""

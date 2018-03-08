@@ -12,8 +12,7 @@ import os
 import yaml
 
 from bison.errors import BisonError
-from bison.scheme import Option
-from bison.utils import DotDict, cast
+from bison.utils import DotDict
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -197,50 +196,9 @@ class Bison(object):
         # config if there is a scheme.
         if self.scheme:
             for k, v in self.scheme.flatten().items():
-                # only Options can be bound to env variables currently.
-                if not isinstance(v, Option):
-                    continue
-
-                # we explicitly do not want to bind the option to env
-                if v.bind_env is False:
-                    continue
-
-                # we want to bind the option to env. in this case, bind_env is
-                # generated from the Option key.
-                elif v.bind_env is True:
-                    env_key = k.replace('.', '_').upper()
-
-                    # if an env prefix exists, use it
-                    if self.env_prefix:
-                        env_key = self.env_prefix.upper() + env_key
-
-                    env = os.environ.get(env_key, None)
-                    if env is not None:
-                        env_cfg[k] = cast(v, env)
-
-                # bind_env holds the env variable to use. since it is specified
-                # manually, we do not prepend the env prefix.
-                elif isinstance(v.bind_env, str):
-                    env_key = v.bind_env
-
-                    env = os.environ.get(env_key, None)
-                    if env is not None:
-                        env_cfg[k] = cast(v, env)
-
-                # bind_env is None - this is its default value. in this case, the
-                # option hasn't been explicitly set as False, so we can do env
-                # lookups if auto_env is set.
-                elif v.bind_env is None:
-                    if self.auto_env:
-                        env_key = k.replace('.', '_').upper()
-
-                        # if an env prefix exists, use it
-                        if self.env_prefix:
-                            env_key = self.env_prefix.upper() + env_key
-
-                        env = os.environ.get(env_key, None)
-                        if env is not None:
-                            env_cfg[k] = cast(v, env)
+                value = v.parse_env(k, self.env_prefix, self.auto_env)
+                if value is not None:
+                    env_cfg[k] = value
 
         if len(env_cfg) > 0:
             # the configuration changes, so we invalidate the cached config

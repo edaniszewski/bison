@@ -6,49 +6,6 @@ bison.utils
 Utilities for `bison`.
 """
 
-from bison.errors import BisonError
-from bison.scheme import Option
-
-
-def cast(option, value):
-    """Cast a value to the type required by the option, if one is set.
-
-    This is used to cast the string values gathered from environment
-    variable into their required type.
-
-    Args:
-        option: The Option specifying the type.
-        value: The value to cast.
-
-    Returns:
-        The value casted to the expected type for the option.
-    """
-    if not isinstance(option, Option):
-        raise BisonError('Unable to cast - "{}" not an Option'.format(option))
-
-    # if there is no type set for the option, return the given
-    # value unchanged.
-    if option.type is None:
-        return value
-
-    # cast directly
-    if option.type in (str, int, float):
-        try:
-            return option.type(value)
-        except Exception as e:
-            raise BisonError(
-                'Failed to cast {} to {}'.format(value, option.type)
-            ) from e
-
-    # for bool, can't cast a string, since a string is truthy,
-    # so we need to check the value.
-    elif option.type == bool:
-        return value.lower() == 'true'
-
-    # the option type is currently not supported
-    else:
-        raise BisonError('Unsupported type for casting: {}'.format(option.type))
-
 
 def build_dot_value(key, value):
     """Build new dictionaries based off of the dot notation key.

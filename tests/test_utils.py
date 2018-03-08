@@ -2,46 +2,7 @@
 
 import pytest
 
-from bison import errors, scheme, utils
-
-
-@pytest.mark.parametrize(
-    'option,value,expected', [
-        (scheme.Option('foo'), 'foo', 'foo'),
-        (scheme.Option('foo'), 1, 1),
-        (scheme.Option('foo'), None, None),
-        (scheme.Option('foo'), False, False),
-        (scheme.Option('foo', field_type=str), 'foo', 'foo'),
-        (scheme.Option('foo', field_type=str), 1, '1'),
-        (scheme.Option('foo', field_type=int), '1', 1),
-        (scheme.Option('foo', field_type=float), '1', 1.0),
-        (scheme.Option('foo', field_type=float), '1.23', 1.23),
-        (scheme.Option('foo', field_type=bool), 'false', False),
-        (scheme.Option('foo', field_type=bool), 'False', False),
-        (scheme.Option('foo', field_type=bool), 'FALSE', False),
-        (scheme.Option('foo', field_type=bool), 'true', True),
-        (scheme.Option('foo', field_type=bool), 'True', True),
-        (scheme.Option('foo', field_type=bool), 'TRUE', True),
-    ]
-)
-def test_cast(option, value, expected):
-    """Cast values to the type set by the Option."""
-    actual = utils.cast(option, value)
-    assert actual == expected
-
-
-@pytest.mark.parametrize(
-    'option,value', [
-        (scheme.Option('foo', field_type=int), 'foo'),
-        (scheme.ListOption('foo'), 'foo'),
-        (scheme.Option('foo', field_type=list), 'foo'),
-        (scheme.Option('foo', field_type=tuple), 'foo'),
-    ]
-)
-def test_cast_fail(option, value):
-    """Cast values to the type set by the Option."""
-    with pytest.raises(errors.BisonError):
-        utils.cast(option, value)
+from bison import utils
 
 
 @pytest.mark.parametrize(
