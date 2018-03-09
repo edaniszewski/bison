@@ -235,6 +235,39 @@ class TestBison:
         assert b.config_file == os.path.join(bad_yaml_config.dirname, bad_yaml_config.basename)
         assert len(b._config) == 0
 
+    def test_parse_config_not_required_found(self, yaml_config):
+        """Parse the file config when it isn't required."""
+        b = bison.Bison()
+        b.add_config_paths(yaml_config.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b._parse_config(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_config.dirname, yaml_config.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'bar': {
+                'baz': 1,
+                'test': 'value'
+            }
+        }
+
+    def test_parse_config_not_required_not_found(self):
+        """Parse the file config when it isn't required."""
+        b = bison.Bison()
+        b.add_config_paths('.')
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b._parse_config(requires_cfg=False)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
     def test_parse_defaults_no_scheme(self):
         """Parse the defaults when there is no Scheme."""
         b = bison.Bison()
