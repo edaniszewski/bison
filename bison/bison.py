@@ -135,10 +135,15 @@ class Bison(object):
         if self.scheme:
             self.scheme.validate(self.config)
 
-    def parse(self):
-        """Parse the configuration sources into `Bison`."""
+    def parse(self, requires_cfg=True):
+        """Parse the configuration sources into `Bison`.
+
+        Args:
+            requires_cfg (bool): Specify whether or not parsing should fail
+                if a config file is not found. (default: True)
+        """
         self._parse_default()
-        self._parse_config()
+        self._parse_config(requires_cfg)
         self._parse_env()
 
     def _find_config(self):
@@ -164,12 +169,21 @@ class Bison(object):
         raise BisonError('No file named {} found in search paths {}'.format(
             self.config_name, self.config_paths))
 
-    def _parse_config(self):
+    def _parse_config(self, requires_cfg=True):
         """Parse the configuration file, if one is configured, and add it to
         the `Bison` state.
+
+        Args:
+            requires_cfg (bool): Specify whether or not parsing should fail
+                if a config file is not found. (default: True)
         """
         if len(self.config_paths) > 0:
-            self._find_config()
+            try:
+                self._find_config()
+            except BisonError:
+                if not requires_cfg:
+                    return
+                raise
             try:
                 with open(self.config_file, 'r') as f:
                     parsed = self._fmt_to_parser[self.config_format](f)
