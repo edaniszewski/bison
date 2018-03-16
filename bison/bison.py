@@ -86,10 +86,10 @@ class Bison(object):
         """
         if self._full_config is None:
             self._full_config = DotDict()
-            self._full_config.update(self._default)
-            self._full_config.update(self._config)
-            self._full_config.update(self._environment)
-            self._full_config.update(self._override)
+            self._full_config.merge(self._default)
+            self._full_config.merge(self._config)
+            self._full_config.merge(self._environment)
+            self._full_config.merge(self._override)
         return self._full_config
 
     def get(self, key, default=None):

@@ -111,6 +111,118 @@ class TestBison:
             }
         }
 
+    def test_set_multiple_nested_2(self):
+        """Set overrides for multiple nested values when some already exist."""
+        b = bison.Bison()
+        assert len(b._override) == 0
+        assert len(b.config) == 0
+
+        # set the override config config to something to begin
+        b._override = bison.DotDict({
+            'foo': 'bar',
+            'bar': {
+                'bat': {
+                    'a': 'test'
+                },
+                'bird': {
+                    'b': 'test'
+                }
+            }
+        })
+
+        b.set('foo', 'baz')
+        assert b.config == {
+            'foo': 'baz',
+            'bar': {
+                'bat': {
+                    'a': 'test'
+                },
+                'bird': {
+                    'b': 'test'
+                }
+            }
+        }
+
+        b.set('bar.bat.a', None)
+        assert b.config == {
+            'foo': 'baz',
+            'bar': {
+                'bat': {
+                    'a': None
+                },
+                'bird': {
+                    'b': 'test'
+                }
+            }
+        }
+
+        b.set('bar.bird', 'warbler')
+        assert b.config == {
+            'foo': 'baz',
+            'bar': {
+                'bat': {
+                    'a': None
+                },
+                'bird': 'warbler'
+            }
+        }
+
+    def test_set_multiple_nested_3(self):
+        """Set overrides for multiple nested values when some already exist."""
+        b = bison.Bison()
+        assert len(b._override) == 0
+        assert len(b.config) == 0
+
+        # set a non override config config to something to begin
+        b._config = bison.DotDict({
+            'foo': 'bar',
+            'bar': {
+                'bat': {
+                    'a': 'test'
+                },
+                'bird': {
+                    'b': 'test'
+                }
+            }
+        })
+
+        b.set('foo', 'baz')
+        assert b.config == {
+            'foo': 'baz',
+            'bar': {
+                'bat': {
+                    'a': 'test'
+                },
+                'bird': {
+                    'b': 'test'
+                }
+            }
+        }
+
+        b.set('bar.bat.a', None)
+        assert b.config == {
+            'foo': 'baz',
+            'bar': {
+                'bat': {
+                    'a': None
+                },
+                'bird': {
+                    'b': 'test'
+                }
+            }
+        }
+
+        b.set('bar.bird', 'warbler')
+        assert b.config == {
+            'foo': 'baz',
+            'bar': {
+                'bat': {
+                    'a': None
+                },
+                'bird': 'warbler'
+            }
+        }
+
     @pytest.mark.parametrize(
         'paths', [
             (),
