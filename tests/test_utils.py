@@ -391,3 +391,107 @@ class TestDotDict:
             }
         })
         assert (key in dd) is expected
+
+    @pytest.mark.parametrize(
+        'source,expected', [
+            ({}, {'foo': 'bar', 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': 'test'}, {'foo': 'test', 'bar': {'baz': {'key': 'value'}}}),
+            ({'abc': '123'}, {'foo': 'bar', 'abc': '123', 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': 'test'}, {'foo': 'bar', 'bar': 'test'}),
+            ({'bar': {'test': 'value'}}, {'foo': 'bar', 'bar': {'test': 'value'}}),
+            ({'test': 123}, {'foo': 'bar', 'test': 123, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': 123}, {'foo': 123, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': 123}, {'foo': 'bar', 'bar': 123}),
+            ({'test': [1, 2, 3]}, {'foo': 'bar', 'test': [1, 2, 3], 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': [1, 2, 3]}, {'foo': [1, 2, 3], 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': [1, 2, 3]}, {'foo': 'bar', 'bar': [1, 2, 3]}),
+            ({'test': {'a': 1}}, {'foo': 'bar', 'test': {'a': 1}, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': {'a': 1}}, {'foo': {'a': 1}, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': {'a': 1}}, {'foo': 'bar', 'bar': {'a': 1}}),
+            ({'test': False}, {'foo': 'bar', 'test': False, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': False}, {'foo': False, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': False}, {'foo': 'bar', 'bar': False}),
+            ({'test': None}, {'foo': 'bar', 'test': None, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': None}, {'foo': None, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': None}, {'foo': 'bar', 'bar': None}),
+        ]
+    )
+    def test_update(self, source, expected):
+        """Update the DotDict"""
+        dd = utils.DotDict({
+            'foo': 'bar',
+            'bar': {
+                'baz': {
+                    'key': 'value'
+                }
+            }
+        })
+        dd.update(source)
+        assert dd == expected
+
+    @pytest.mark.parametrize(
+        'source,expected', [
+            ({}, {'foo': 'bar', 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': 'test'}, {'foo': 'test', 'bar': {'baz': {'key': 'value'}}}),
+            ({'abc': '123'}, {'foo': 'bar', 'abc': '123', 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': 'test'}, {'foo': 'bar', 'bar': 'test'}),
+            ({'bar': {'test': 'value'}}, {'foo': 'bar', 'bar': {'baz': {'key': 'value'}, 'test': 'value'}}),
+            ({'test': 123}, {'foo': 'bar', 'test': 123, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': 123}, {'foo': 123, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': 123}, {'foo': 'bar', 'bar': 123}),
+            ({'test': [1, 2, 3]}, {'foo': 'bar', 'test': [1, 2, 3], 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': [1, 2, 3]}, {'foo': [1, 2, 3], 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': [1, 2, 3]}, {'foo': 'bar', 'bar': [1, 2, 3]}),
+            ({'test': {'a': 1}}, {'foo': 'bar', 'test': {'a': 1}, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': {'a': 1}}, {'foo': {'a': 1}, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': {'a': 1}}, {'foo': 'bar', 'bar': {'a': 1, 'baz': {'key': 'value'}}}),
+            ({'test': False}, {'foo': 'bar', 'test': False, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': False}, {'foo': False, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': False}, {'foo': 'bar', 'bar': False}),
+            ({'test': None}, {'foo': 'bar', 'test': None, 'bar': {'baz': {'key': 'value'}}}),
+            ({'foo': None}, {'foo': None, 'bar': {'baz': {'key': 'value'}}}),
+            ({'bar': None}, {'foo': 'bar', 'bar': None}),
+        ]
+    )
+    def test_merge(self, source, expected):
+        """Update the DotDict"""
+        dd = utils.DotDict({
+            'foo': 'bar',
+            'bar': {
+                'baz': {
+                    'key': 'value'
+                }
+            }
+        })
+        dd.merge(source)
+        assert dd == expected
+
+    def test_deep_merge(self):
+        """Test merging through many nested dicts."""
+        dd = utils.DotDict({
+            'foo': {
+                'bar': {
+                    'baz': {
+                        'bison': True
+                    }
+                }
+            }
+        })
+        dd.merge({'foo': {
+            'bar': {
+                'baz': {
+                    'birds': False
+                }
+            }
+        }})
+
+        assert dd == {
+            'foo': {
+                'bar': {
+                    'baz': {
+                        'bison': True,
+                        'birds': False
+                    }
+                }
+            }
+        }

@@ -6,6 +6,8 @@ bison.utils
 Utilities for `bison`.
 """
 
+import collections
+
 
 def build_dot_value(key, value):
     """Build new dictionaries based off of the dot notation key.
@@ -167,3 +169,69 @@ class DotDict(dict):
                     raise KeyError(
                         'Subkey "{}" in "{}" invalid for deletion'.format(k, key)
                     )
+
+    def merge(self, source):
+        """Merge the dictionary with the values from another dictionary
+        (or other DotDict).
+
+        This is preferable to using `update` in some cases. Merging will recursively
+        update a dictionary, while updating will just overwrite. As an example, if
+        we have the DotDict with the values
+
+            >>> d = DotDict({
+            ...   'foo': {
+            ...     'bar': True
+            ...   }
+            ... })
+            >>> d
+            {'foo': {'bar': True}}
+
+        Then for update, we would get:
+
+            >>> d.update({'foo': {'baz': False}})
+            >>> d
+            {'foo': {'baz': False}}
+
+        For a merge, we would get:
+
+            >>> d.merge({'foo': {'baz': False}})
+            >>> d
+            {'foo': {'bar': True, 'baz': False}}
+
+        So, an `update` will replace the specified dictionary, but a `merge` will
+        combine the values.
+
+        Args:
+            source: The dict/iterable which will be used to update the DotDict.
+        """
+        _merge(self, source)
+
+
+def _merge(d, u):
+    """Merge two dictionaries (or DotDicts) together.
+
+    Args:
+          d: The dictionary/DotDict to merge into.
+          u: The source of the data to merge.
+    """
+    for k, v in u.items():
+        # if we have a mapping, recursively merge the values
+        if isinstance(v, collections.Mapping):
+            d[k] = _merge(d.get(k, {}), v)
+
+        # if d (the dict to merge into) is a dict, just add the
+        # value to the dict.
+        elif isinstance(d, collections.MutableMapping):
+            d[k] = v
+
+        # otherwise if d (the dict to merge into) is not a dict (e.g. when
+        # recursing into it, `d.get(k, {})` may not be a dict), then do what
+        # `update` does and prefer the new value.
+        #
+        # this means that something like `{'foo': 1}` when updated with
+        # `{'foo': {'bar': 1}}` would have the original value (`1`) overwritten
+        # and would become: `{'foo': {'bar': 1}}`
+        else:
+            d = {k: v}
+
+    return d
