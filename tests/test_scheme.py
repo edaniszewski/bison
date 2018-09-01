@@ -671,8 +671,8 @@ class TestScheme:
                 {'foo': 'baz'}
             ),
             (
-                # option does not exist in config, but has default
-                (scheme.Option('foo', default='bar', field_type=str),),
+                # option does not exist in config and has default, but is not required
+                (scheme.Option('foo', default='bar', required=False, field_type=str),),
                 {}
             ),
             (
@@ -683,6 +683,17 @@ class TestScheme:
                     scheme.Option('baz', choices=['test'])
                 ),
                 {'foo': 'a', 'bar': 1, 'baz': 'test'}
+            ),
+            (
+                # optional parent option not specified, required child option
+                # not specified
+                (
+                    scheme.DictOption('foo', required=False, scheme=scheme.Scheme(
+                        scheme.Option('bar', field_type=str),
+                        scheme.Option('baz', field_type=str),
+                    )),
+                ),
+                {}
             )
         ]
     )
@@ -711,6 +722,17 @@ class TestScheme:
                     scheme.Option('baz', choices=['test'])
                 ),
                 {'foo': 'a', 'bar': 1, 'baz': 'something'}
+            ),
+            (
+                # optional parent option specified, required child option
+                # not specified
+                (
+                    scheme.DictOption('foo', required=True, scheme=scheme.Scheme(
+                        scheme.Option('bar', field_type=str),
+                        scheme.Option('baz', field_type=str),
+                    )),
+                ),
+                {'foo': {'baz': 2}}
             )
         ]
     )

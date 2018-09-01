@@ -17,7 +17,7 @@ init: requires-pipenv  ## Initialize the project for development
 
 .PHONY: test
 test:  ## Run the bison unit tests
-	pipenv run py.test
+	pipenv run py.test -vv
 
 .PHONY: ci
 ci: coverage lint ## Run the ci pipeline (test w/ coverage, lint)

@@ -22,6 +22,22 @@ def yaml_config(tmpdir):
 
 
 @pytest.fixture()
+def yaml_optional_nested(tmpdir):
+    """Create a YAML config file with optional nested values."""
+    cfg = tmpdir.join('config.yml')
+    cfg.write("""
+    foo: True
+    nested1:
+      x: abc
+      y: def
+    """)
+
+    yield cfg
+
+    cfg.remove()
+
+
+@pytest.fixture()
 def bad_yaml_config(tmpdir):
     """Create a bad YAML config file."""
     cfg = tmpdir.join('config.yml')
