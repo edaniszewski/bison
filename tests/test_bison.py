@@ -270,12 +270,6 @@ class TestBison:
         with pytest.raises(errors.SchemeValidationError):
             b.validate()
 
-    def test_parse_no_sources(self):
-        """Parse when there are no sources to parse from."""
-        b = bison.Bison()
-        b.parse()
-        assert len(b.config) == 0
-
     def test_find_config(self, yaml_config):
         """Find a config file when it does exist"""
         b = bison.Bison()
@@ -300,6 +294,12 @@ class TestBison:
 
         with pytest.raises(errors.BisonError):
             b._find_config()
+
+    def test_parse_no_sources(self):
+        """Parse when there are no sources to parse from."""
+        b = bison.Bison()
+        b.parse()
+        assert len(b.config) == 0
 
     def test_parse_config_no_paths(self):
         """Parse the file config when no paths are specified"""
@@ -643,3 +643,206 @@ class TestBison:
         assert b.config == {
             'foo': False,
         }
+
+    def test_parse_validate_nested_optional(self, yaml_optional_nested):
+        """Parse a config for a scheme with a non-required option with
+        required nested options where the non-required option is not set.
+        """
+        b = bison.Bison(scheme=bison.Scheme(
+            bison.Option('foo', bind_env=True),
+            bison.DictOption('nested2', required=False, bind_env=True, scheme=bison.Scheme(
+                bison.Option('x', field_type=str),
+                bison.Option('y', field_type=str)
+            ))
+        ))
+        b.add_config_paths(yaml_optional_nested.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b.parse(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_optional_nested.dirname, yaml_optional_nested.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'nested1': {
+                'x': 'abc',
+                'y': 'def'
+            }
+        }
+
+        b.validate()
+
+    def test_parse_validate_nested_optional2(self, yaml_optional_nested):
+        """Parse a config for a scheme with a non-required option with
+        required nested options where the non-required option is set.
+        """
+        b = bison.Bison(scheme=bison.Scheme(
+            bison.Option('foo', bind_env=True),
+            bison.DictOption('nested1', required=False, bind_env=True, scheme=bison.Scheme(
+                bison.Option('x', field_type=str),
+                bison.Option('y', field_type=str)
+            ))
+        ))
+        b.add_config_paths(yaml_optional_nested.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b.parse(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_optional_nested.dirname, yaml_optional_nested.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'nested1': {
+                'x': 'abc',
+                'y': 'def'
+            }
+        }
+
+        b.validate()
+
+    def test_parse_validate_nested_optional3(self, yaml_optional_nested):
+        """Parse a config for a scheme with a non-required option with
+        required nested options where the non-required option is not set,
+        and the required options have defaults.
+        """
+        b = bison.Bison(scheme=bison.Scheme(
+            bison.Option('foo', bind_env=True),
+            bison.DictOption('nested2', required=False, bind_env=True, scheme=bison.Scheme(
+                bison.Option('x', default="abc", field_type=str),
+                bison.Option('y', default="def", field_type=str)
+            ))
+        ))
+        b.add_config_paths(yaml_optional_nested.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b.parse(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_optional_nested.dirname, yaml_optional_nested.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'nested1': {
+                'x': 'abc',
+                'y': 'def'
+            },
+            'nested2': {  # defaults get picked up
+                'x': 'abc',
+                'y': 'def'
+            }
+        }
+
+        b.validate()
+
+    def test_parse_validate_nested_optional4(self, yaml_optional_nested):
+        """Parse a config for a scheme with a non-required option with
+        required nested options where the non-required option is not set
+        and it has a default value.
+        """
+        b = bison.Bison(scheme=bison.Scheme(
+            bison.Option('foo', bind_env=True),
+            bison.DictOption('nested2', required=False, default={}, bind_env=True, scheme=bison.Scheme(
+                bison.Option('x', field_type=str),
+                bison.Option('y', field_type=str)
+            ))
+        ))
+        b.add_config_paths(yaml_optional_nested.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b.parse(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_optional_nested.dirname, yaml_optional_nested.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'nested1': {
+                'x': 'abc',
+                'y': 'def'
+            },
+            'nested2': {}  # default gets picked up
+        }
+
+        # validation should fail -- the default value gets added, but the required
+        # options are not set in the default
+        with pytest.raises(errors.SchemeValidationError):
+            b.validate()
+
+    def test_parse_validate_nested_optional5(self, yaml_optional_nested):
+        """Parse a config for a scheme with a non-required option with
+        required nested options where the non-required option is not set
+        and it has a default value.
+        """
+        b = bison.Bison(scheme=bison.Scheme(
+            bison.Option('foo', bind_env=True),
+            bison.DictOption('nested2', required=False, default={'x': 'ghi', 'y': 'jkl'}, bind_env=True, scheme=bison.Scheme(
+                bison.Option('x', field_type=str),
+                bison.Option('y', field_type=str)
+            ))
+        ))
+        b.add_config_paths(yaml_optional_nested.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b.parse(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_optional_nested.dirname, yaml_optional_nested.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'nested1': {
+                'x': 'abc',
+                'y': 'def'
+            },
+            'nested2': {  # default gets picked up
+                'x': 'ghi',
+                'y': 'jkl'
+            }
+        }
+
+        b.validate()
+
+    def test_parse_validate_nested_optional6(self, yaml_optional_nested):
+        """Parse a config for a scheme with a non-required option with
+        required nested options where the non-required option is not set
+        and it has a default value.
+
+        This test is the same as the one above, but the defaults are
+        specified differently.
+        """
+        b = bison.Bison(scheme=bison.Scheme(
+            bison.Option('foo', bind_env=True),
+            bison.DictOption('nested2', required=False, default={}, bind_env=True, scheme=bison.Scheme(
+                bison.Option('x', default='ghi', field_type=str),
+                bison.Option('y', default='jkl', field_type=str)
+            ))
+        ))
+        b.add_config_paths(yaml_optional_nested.dirname)
+
+        assert b.config_file is None
+        assert len(b._config) == 0
+
+        b.parse(requires_cfg=False)
+
+        assert b.config_file == os.path.join(yaml_optional_nested.dirname, yaml_optional_nested.basename)
+        assert len(b._config) == 2
+        assert b.config == {
+            'foo': True,
+            'nested1': {
+                'x': 'abc',
+                'y': 'def'
+            },
+            'nested2': {  # default gets picked up
+                'x': 'ghi',
+                'y': 'jkl'
+            }
+        }
+
+        b.validate()

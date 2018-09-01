@@ -54,7 +54,7 @@ class Scheme(object):
         defaults = {}
         for arg in self.args:
             if not isinstance(arg, _BaseOpt):
-                raise errors.InvalidSchemeError('')
+                raise errors.InvalidSchemeError('Unable to build default for non-Option type')
 
             # if there is a default set, add it to the defaults dict
             if not isinstance(arg.default, NoDefault):
@@ -96,7 +96,7 @@ class Scheme(object):
         return self._flat
 
     def validate(self, config):
-        """Validate the given config against the `Schema`.
+        """Validate the given config against the `Scheme`.
 
         Args:
             config (dict): The configuration to validate.
@@ -118,13 +118,11 @@ class Scheme(object):
 
             # the option does not exist in the config
             else:
-                # if the option has a default value, then it is
-                # considered optional and is fine to omit, otherwise
-                # it is considered to be required and its omission
-                # is a validation error.
-                if type(arg.default) == NoDefault:
+                # if the option is not required, then it is fine to omit.
+                # otherwise, its omission constitutes a validation error.
+                if arg.required:
                     raise errors.SchemeValidationError(
-                        'Option "{}" is expected but not found.'.format(arg.name)
+                        'Option "{}" is required, but not found.'.format(arg.name)
                     )
 
 
@@ -180,20 +178,23 @@ class Option(_BaseOpt):
     Args:
         name (str): The name of the option - this should correspond to the key
             for the option in a configuration file, e.g.
-        default: The default value to use. By default, this is the internal
-            `_NoDefault` type. If the value of this is anything other than
-            `_NoDefault`, this option is considered optional, so validation will
-            not fail if it is not present in the config. If this is left at its
-            default value of `_NoDefault`, then this option is considered required
-            and will fail validation if not present.
+        required (bool): A flag that determines whether the option is required
+            or not. If required and the option is not present in the config,
+            validation will fail. If optional and not present in the config,
+            validation will not fail. By default, an option is required.
+        default: The default value to use for the option. If the option is not
+            found in the config, the default will be used (regardless of whether
+            it is required or optional). By default, this is the internal
+            `_NoDefault` type (this allows setting `None` as a default).
         field_type: The type that the option value should have.
         choices (list|tuple): The valid options for the field.
         bind_env (bool|str|None): Bind the option to an environment variable.
     """
 
-    def __init__(self, name, default=_no_default, field_type=None, choices=None, bind_env=None):
+    def __init__(self, name, required=True, default=_no_default, field_type=None, choices=None, bind_env=None):
         super(Option, self).__init__()
         self.name = name
+        self.required = required
         self.default = default
         self.type = field_type
         self.choices = choices
@@ -310,12 +311,14 @@ class DictOption(_BaseOpt):
             for the option in a configuration file, e.g.
         scheme (Scheme|None): A Scheme that defines what the dictionary config should
             adhere to. This can be None if no validation is wanted on the option.
-        default: The default value to use. By default, this is the internal
-            `_NoDefault` type. If the value of this is anything other than
-            `_NoDefault`, this option is considered optional, so validation will
-            not fail if it is not present in the config. If this is left at its
-            default value of `_NoDefault`, then this option is considered required
-            and will fail validation if not present.
+        required (bool): A flag that determines whether the option is required
+            or not. If required and the option is not present in the config,
+            validation will fail. If optional and not present in the config,
+            validation will not fail. By default, an option is required.
+        default: The default value to use for the option. If the option is not
+            found in the config, the default will be used (regardless of whether
+            it is required or optional). By default, this is the internal
+            `_NoDefault` type (this allows setting `None` as a default).
         bind_env (bool): Bind the option to an environment variable. If False,
             the option will not be bound to env. If True, the key for the this
             DictOption will serve as an environment prefix. Any environment
@@ -323,9 +326,10 @@ class DictOption(_BaseOpt):
             as a string.
     """
 
-    def __init__(self, name, scheme, default=_no_default, bind_env=False):
+    def __init__(self, name, scheme, required=True, default=_no_default, bind_env=False):
         super(DictOption, self).__init__()
         self.name = name
+        self.required = required
         self.default = default
         self.scheme = scheme
         self.bind_env = bind_env
@@ -382,12 +386,14 @@ class ListOption(_BaseOpt):
     Args:
         name (str): The name of the option - this should correspond to the key
             for the option in a configuration file, e.g.
-        default: The default value to use. By default, this is the internal
-            `_NoDefault` type. If the value of this is anything other than
-            `_NoDefault`, this option is considered optional, so validation will
-            not fail if it is not present in the config. If this is left at its
-            default value of `_NoDefault`, then this option is considered required
-            and will fail validation if not present.
+        required (bool): A flag that determines whether the option is required
+            or not. If required and the option is not present in the config,
+            validation will fail. If optional and not present in the config,
+            validation will not fail. By default, an option is required.
+        default: The default value to use for the option. If the option is not
+            found in the config, the default will be used (regardless of whether
+            it is required or optional). By default, this is the internal
+            `_NoDefault` type (this allows setting `None` as a default).
         member_type: The type that all members of the list should have.
         member_scheme (Scheme): The `Scheme` that all members of the list should
             fulfil. This should be used when the list members are dictionaries/maps.
@@ -398,9 +404,10 @@ class ListOption(_BaseOpt):
             items being comma separated.
     """
 
-    def __init__(self, name, default=_no_default, member_type=None, member_scheme=None, bind_env=False):
+    def __init__(self, name, required=True, default=_no_default, member_type=None, member_scheme=None, bind_env=False):
         super(ListOption, self).__init__()
         self.name = name
+        self.required = required
         self.default = default
         self.member_type = member_type
         self.member_scheme = member_scheme
