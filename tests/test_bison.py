@@ -63,6 +63,25 @@ class TestBison:
         assert value == expected
 
     @pytest.mark.parametrize(
+        'key,default,expected,config', [
+            ('foo', 7, 7, None),
+            ('foo', None, None, bison.DotDict()),
+            ('foo', 'bar', 'bar', bison.DotDict()),
+            ('foo', 'bar', None, bison.DotDict({'foo': None})),
+            ('foo', 'bar', 'test', bison.DotDict({'foo': 'test'})),
+            ('foo.bar', 7, 'baz', bison.DotDict({'foo': {'bar': 'baz'}})),
+            ('foo.bar', 7, 7, bison.DotDict({'foo': {'something': 'else'}})),
+        ]
+    )
+    def test_get_with_defaults(self, key, default, expected, config):
+        """Get config values from Bison, using defaults if the key is not set."""
+        b = bison.Bison()
+        b._full_config = config  # for the test, set the config manually
+
+        value = b.get(key, default=default)
+        assert value == expected
+
+    @pytest.mark.parametrize(
         'key,value', [
             ('foo', 'bar'),
             ('foo', 1),
