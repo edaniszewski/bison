@@ -5,12 +5,12 @@ python:
   - "3.6"
 
 # install dependencies
-install: "make"
+install: pip install tox-travis
 
 # run tests and linting
 script:
-  - pip install tox>=3.4.0
-  - make ci
+  - tox
+  - tox -e lint
 
 after_success:
   - coveralls
