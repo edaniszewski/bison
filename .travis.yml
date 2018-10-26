@@ -9,7 +9,7 @@ install: "make"
 
 # run tests and linting
 script:
-  - pip install -u tox
+  - pip install tox>=3.4.0
   - make ci
 
 after_success:
