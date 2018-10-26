@@ -9,8 +9,6 @@ install: "make"
 
 # run tests and linting
 script:
-  - pip install pipenv --upgrade
-  - make init
   - make ci
 
 after_success:

@@ -2,34 +2,23 @@
 # bison - python application configuration
 #
 
-HAS_PIPENV := $(shell which pipenv)
 PKG_VERSION := $(shell cat bison/__version__.py | grep __version__ | awk '{print $$3}')
 
-requires-pipenv:
-ifndef HAS_PIPENV
-	@echo "pipenv required, but not found: run 'pip install pipenv --upgrade'"
-	exit 1
-endif
-
-.PHONY: init
-init: requires-pipenv  ## Initialize the project for development
-	pipenv install --dev --skip-lock
 
 .PHONY: test
 test:  ## Run the bison unit tests
-	pipenv run py.test -vv
+	tox tests
 
 .PHONY: ci
-ci: coverage lint ## Run the ci pipeline (test w/ coverage, lint)
+ci: test lint  ## Run the ci pipeline (test w/ coverage, lint)
+
+.PHONY: deps  ## Update pinned project dependencies (requirements.txt)
+deps:
+	tox -e deps
 
 .PHONY: lint
-lint: requires-pipenv  ## Run static analysis / linting on bison
-	pipenv run flake8 --ignore=E501,E712 bison
-	pipenv run isort bison tests -rc -c --diff
-
-.PHONY: coverage
-coverage: requires-pipenv  ## Show the coverage report for unit tests
-	pipenv run py.test --cov-report term --cov-report html --cov=bison tests
+lint:  ## Run static analysis / linting on bison
+	tox -e lint
 
 .PHONY: publish
 publish:  ## Publish bison to Pypi

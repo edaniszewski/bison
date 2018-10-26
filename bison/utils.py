@@ -123,12 +123,12 @@ class DotDict(dict):
         # DotDicts.
         first, remainder = key.split('.', 1)
         if first in self:
-            value = super(DotDict, self).get(first)
+            value = super(DotDict, self).get(first, default)
 
             # if the value for the key at this level is a dictionary,
             # then pass the remainder to that DotDict.
             if isinstance(value, (dict, DotDict)):
-                return DotDict(value).get(remainder)
+                return DotDict(value).get(remainder, default)
 
             # TODO: support lists
 
