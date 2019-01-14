@@ -32,7 +32,7 @@ setup(
     include_package_data=True,
     python_requires=">=3.4",
     install_requires=[
-        'pyyaml'
+        'pyyaml>=4.2b1'
     ],
     zip_safe=False,
     classifiers=[
