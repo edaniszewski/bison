@@ -82,6 +82,24 @@ class TestBison:
         assert value == expected
 
     @pytest.mark.parametrize(
+        'key,expected,config', [
+            ('foo', None, None),
+            ('foo', None, bison.DotDict()),
+            ('foo', None, bison.DotDict({'foo': None})),
+            ('foo', 'bar', bison.DotDict({'foo': 'bar'})),
+            ('foo.bar', 'baz', bison.DotDict({'foo': {'bar': 'baz'}})),
+            ('foo.bar.baz', 1, bison.DotDict({'foo': {'bar': {'baz': 1}}})),
+        ]
+    )
+    def test_get_subscriptable(self, key, expected, config):
+        """Get config values from Bison via subscripting."""
+        b = bison.Bison()
+        b._full_config = config  # for the test, set the config manually
+
+        value = b[key]
+        assert value == expected
+
+    @pytest.mark.parametrize(
         'key,value', [
             ('foo', 'bar'),
             ('foo', 1),

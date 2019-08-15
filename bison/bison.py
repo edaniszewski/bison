@@ -75,6 +75,11 @@ class Bison(object):
         # the unified configuration.
         self._full_config = None
 
+    def __getitem__(self, item):
+        # Set __getitem__ so the Bison config can be accessed via subscripting,
+        # e.g. config['foo']
+        return self.get(item)
+
     @property
     def config(self):
         """Get the complete configuration where the default, config,

@@ -760,3 +760,41 @@ class TestScheme:
         sch = scheme.Scheme()
         with pytest.raises(errors.SchemeValidationError):
             sch.validate(value)
+
+    @pytest.mark.parametrize(
+        'args,value', [
+            (
+                    # option does not exist in config, has default, not required
+                    (scheme.Option('foo', default='bar'),),
+                    {}
+            ),
+            (
+                    # option does not exist in config, has default, not required
+                    (
+                            scheme.DictOption('foo', scheme=scheme.Scheme(
+                                scheme.Option('bar', default=1),
+                                scheme.Option('baz'),
+                            )),
+                    ),
+                    {'foo': {'baz': 2}}
+            ),
+            (
+                    # option does not exist in config, has default, not required
+                    (
+                            scheme.ListOption('foo', member_scheme=scheme.Scheme(
+                                scheme.Option('bar', default=1),
+                                scheme.Option('baz'),
+                            )),
+                    ),
+                    {'foo': [{'baz': 2}, {'bar': 3, 'baz': 2}]}
+            ),
+        ]
+    )
+    def test_validate_has_default(self, args, value):
+        """Validate a Scheme where a default value is set, and the required field
+        may or may not be set.
+
+        If a default value is provided, it should be assumed to not be required.
+        """
+        sch = scheme.Scheme(*args)
+        sch.validate(value)

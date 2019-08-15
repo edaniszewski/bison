@@ -119,8 +119,9 @@ class Scheme(object):
             # the option does not exist in the config
             else:
                 # if the option is not required, then it is fine to omit.
-                # otherwise, its omission constitutes a validation error.
-                if arg.required:
+                # otherwise, its omission constitutes a validation error unless
+                # a default value is specified for the option.
+                if arg.required and isinstance(arg.default, NoDefault):
                     raise errors.SchemeValidationError(
                         'Option "{}" is required, but not found.'.format(arg.name)
                     )
