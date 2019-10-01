@@ -9,7 +9,7 @@ def test_base_opt_validate():
     """Validate the base option, which should fail."""
     opt = scheme._BaseOpt()
     with pytest.raises(NotImplementedError):
-        opt.validate('test-data')
+        opt.validate('foo', 'test-data')
 
 
 def test_base_opt_parse_env():
@@ -69,13 +69,17 @@ class TestOption:
             (tuple, ('a', 'b')),
             (dict, {}),
             (dict, {'a': 'b'}),
-            (dict, {1: 2})
+            (dict, {1: 2}),
+            ([int, float], 1),
+            ([int, float], 1.0),
+            ((int, float), 1),
+            ((int, float), 1.0),
         ]
     )
     def test_validate_type_ok(self, field_type, value):
         """Validate an Option, where type validation succeeds"""
         opt = scheme.Option('test-option', field_type=field_type)
-        opt.validate(value)
+        opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'field_type,value', [
@@ -108,13 +112,18 @@ class TestOption:
             (list, 1),
             (list, 1.8),
             (list, True),
+
+            ([int, float], 'foo'),
+            ([int, float], None),
+            ((int, float), 'foo'),
+            ((int, float), None),
         ]
     )
     def test_validate_type_failure(self, field_type, value):
         """Validate an Option, where type validation fails"""
         opt = scheme.Option('test-option', field_type=field_type)
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(value)
+            opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'choices,value', [
@@ -133,7 +142,7 @@ class TestOption:
     def test_validate_choices_ok(self, choices, value):
         """Validate an Option, where choice validation succeeds"""
         opt = scheme.Option('test-option', choices=choices)
-        opt.validate(value)
+        opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'choices,value', [
@@ -148,7 +157,7 @@ class TestOption:
         """Validate an Option, where choice validation succeeds"""
         opt = scheme.Option('test-option', choices=choices)
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(value)
+            opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'option,value,expected', [
@@ -276,19 +285,19 @@ class TestDictOption:
         """Validate a DictOption where the given value is not a dict"""
         opt = scheme.DictOption('test-opt', scheme.Scheme())
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(value)
+            opt.validate('foo', value)
 
     def test_validate_no_scheme(self):
         """Validate a DictOption with no scheme"""
         opt = scheme.DictOption('test-opt', None)
-        opt.validate({'foo': 'bar'})
+        opt.validate('foo', {'foo': 'bar'})
 
     def test_validate_with_scheme(self):
         """Validate a DictOption with a scheme"""
         opt = scheme.DictOption('test-opt', scheme.Scheme(
             scheme.Option('foo', field_type=str)
         ))
-        opt.validate({'foo': 'bar'})
+        opt.validate('foo', {'foo': 'bar'})
 
     @pytest.mark.parametrize(
         'option,prefix,auto_env', [
@@ -374,7 +383,7 @@ class TestListOption:
         """Validate when the value is not a list"""
         opt = scheme.ListOption('test-opt')
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(value)
+            opt.validate('foo', value)
 
     def test_validate_member_type_scheme_conflict(self):
         """Validate the ListOption when both member_type and member_scheme are defined."""
@@ -384,7 +393,7 @@ class TestListOption:
             member_scheme=scheme.Scheme()
         )
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate([1, 2, 3])
+            opt.validate('foo', [1, 2, 3])
 
     @pytest.mark.parametrize(
         'member_type,value', [
@@ -400,7 +409,7 @@ class TestListOption:
     def test_validate_member_type_ok(self, member_type, value):
         """Validate the ListOption, where member_type validation succeeds."""
         opt = scheme.ListOption('test-opt', member_type=member_type)
-        opt.validate(value)
+        opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'member_type,value', [
@@ -424,7 +433,7 @@ class TestListOption:
         """Validate the ListOption, where member_type validation fails."""
         opt = scheme.ListOption('test-opt', member_type=member_type)
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(value)
+            opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'member_scheme,value', [
@@ -444,7 +453,7 @@ class TestListOption:
     def test_validate_member_scheme_ok(self, member_scheme, value):
         """Validate the ListOption, where member_scheme validation succeeds."""
         opt = scheme.ListOption('test-opt', member_scheme=member_scheme)
-        opt.validate(value)
+        opt.validate('foo', value)
 
     @pytest.mark.parametrize(
         'member_scheme,value', [
@@ -471,13 +480,13 @@ class TestListOption:
         """Validate the ListOption, where member_scheme validation fails."""
         opt = scheme.ListOption('test-opt', member_scheme=member_scheme)
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(value)
+            opt.validate('foo', value)
 
     def test_validate_member_scheme_not_a_scheme(self):
         """Validate the ListOption, where the member_scheme is not a Scheme."""
         opt = scheme.ListOption('test-opt', member_scheme='not-none-or-scheme')
         with pytest.raises(errors.SchemeValidationError):
-            opt.validate(['a', 'b', 'c'])
+            opt.validate('foo', ['a', 'b', 'c'])
 
     @pytest.mark.parametrize(
         'option,prefix,auto_env', [

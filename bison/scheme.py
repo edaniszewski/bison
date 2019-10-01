@@ -114,7 +114,7 @@ class Scheme(object):
         for arg in self.args:
             # the option exists in the config
             if arg.name in config:
-                arg.validate(config[arg.name])
+                arg.validate(arg.name, config[arg.name])
 
             # the option does not exist in the config
             else:
@@ -134,10 +134,12 @@ class _BaseOpt(object):
         self.name = None
         self.default = NoDefault
 
-    def validate(self, value):
+    def validate(self, key, value):
         """Validate that the option constraints are met by the configuration.
 
         Args:
+            key: The key name for the option. This is used to identify the
+                field on error.
             value: The value corresponding with the option.
 
         Raises:
@@ -187,7 +189,7 @@ class Option(_BaseOpt):
             found in the config, the default will be used (regardless of whether
             it is required or optional). By default, this is the internal
             `_NoDefault` type (this allows setting `None` as a default).
-        field_type: The type that the option value should have.
+        field_type (type|list): The type that the option value should have.
         choices (list|tuple): The valid options for the field.
         bind_env (bool|str|None): Bind the option to an environment variable.
     """
@@ -201,14 +203,22 @@ class Option(_BaseOpt):
         self.choices = choices
         self.bind_env = bind_env
 
-    def validate(self, value):
-        if (self.type is not None) and (type(value) != self.type):
-            raise errors.SchemeValidationError(
-                '{} is of type {}, but should be {}'.format(value, type(value), self.type)
-            )
+    def validate(self, key, value):
+        if self.type is not None:
+            if isinstance(self.type, (list, tuple)):
+                if type(value) not in self.type:
+                    raise errors.SchemeValidationError(
+                        '{}={} : value is of type {}, but should be {}'.format(key, value, type(value), self.type)
+                    )
+            else:
+                if type(value) != self.type:
+                    raise errors.SchemeValidationError(
+                        '{}={} : value is of type {}, but should be {}'.format(key, value, type(value), self.type)
+                    )
+
         if (self.choices is not None) and (value not in self.choices):
             raise errors.SchemeValidationError(
-                '{} is not in the valid options: {}'.format(value, self.choices)
+                '{}={} : value is not in the valid choice options: {}'.format(key, value, self.choices)
             )
 
     def parse_env(self, key=None, prefix=None, auto_env=False):
@@ -335,9 +345,9 @@ class DictOption(_BaseOpt):
         self.scheme = scheme
         self.bind_env = bind_env
 
-    def validate(self, value):
+    def validate(self, key, value):
         if not isinstance(value, dict):
-            raise errors.SchemeValidationError('{} is not a dictionary'.format(value))
+            raise errors.SchemeValidationError('{}={} : value is not a dictionary'.format(key, value))
 
         if isinstance(self.scheme, Scheme):
             self.scheme.validate(value)
@@ -414,9 +424,9 @@ class ListOption(_BaseOpt):
         self.member_scheme = member_scheme
         self.bind_env = bind_env
 
-    def validate(self, value):
+    def validate(self, key, value):
         if not isinstance(value, list):
-            raise errors.SchemeValidationError('{} is not a list'.format(value))
+            raise errors.SchemeValidationError('{}={} : value is not a list'.format(key, value))
 
         if self.member_scheme is not None and self.member_type is not None:
             raise errors.SchemeValidationError(
