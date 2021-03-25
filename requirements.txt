@@ -4,4 +4,4 @@
 #
 #    pip-compile --output-file requirements.txt setup.py
 #
-pyyaml==4.2b4
+pyyaml==5.4
