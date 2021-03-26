@@ -1,6 +1,4 @@
 <p align="center">
-    <a href="https://travis-ci.org/edaniszewski/bison"><img src="https://travis-ci.org/edaniszewski/bison.svg?branch=master" /></a>
-    <a href='https://coveralls.io/github/edaniszewski/bison'><img src='https://coveralls.io/repos/github/edaniszewski/bison/badge.svg' /></a>
     <a href="https://pypi.python.org/pypi/bison"><img src="https://img.shields.io/pypi/v/bison.svg"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/edaniszewski/bison.svg"></a>
         
