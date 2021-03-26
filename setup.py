@@ -31,7 +31,7 @@ setup(
     package_data={'': ['LICENSE']},
     package_dir={'bison': 'bison'},
     include_package_data=True,
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     install_requires=[
         'pyyaml>=5.4'
     ],
