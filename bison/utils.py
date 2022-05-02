@@ -6,7 +6,7 @@ bison.utils
 Utilities for `bison`.
 """
 
-import collections
+import collections.abc
 
 
 def build_dot_value(key, value):
@@ -216,12 +216,12 @@ def _merge(d, u):
     """
     for k, v in u.items():
         # if we have a mapping, recursively merge the values
-        if isinstance(v, collections.Mapping):
+        if isinstance(v, collections.abc.Mapping):
             d[k] = _merge(d.get(k, {}), v)
 
         # if d (the dict to merge into) is a dict, just add the
         # value to the dict.
-        elif isinstance(d, collections.MutableMapping):
+        elif isinstance(d, collections.abc.MutableMapping):
             d[k] = v
 
         # otherwise if d (the dict to merge into) is not a dict (e.g. when
